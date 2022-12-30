@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/netip"
 	"os"
+  "math/rand"
+  "time"
 	"os/signal"
 	"syscall"
 	"github.com/brutella/hap"
@@ -37,7 +39,7 @@ func init() {
 	flag.StringVar(&config.Host, "h", "", "homekit host, example: 192.168.1.xxx")
 	flag.UintVar(&config.Port, "p", 10726, "homekit port, example: 10101, 10102...")
 	flag.StringVar(&config.Pin, "pin", "19378246", "homekit pin, example: 82143697, 13974682")
-  flag.StringVar(&dconfig.DivoomAddr, "DivoomAddr", "192.168.88.53", "pixoo64 IP address: 192.168.88.53")
+  flag.StringVar(&dconfig.DivoomAddr, "DivoomAddr", "192.168.88.53", "pixoo64 IP address: 192.168.XX.XX")
 	flag.Parse()
 
 	homekit.OnLog(debug)
@@ -56,13 +58,12 @@ func main() {
   }
 
 
-	acc := homekit.NewAccessoryTelevision(config.GetInfo("Ex-TV"))
-	_ = acc.AddInputSource(1, "HDMI-1", characteristic.InputSourceTypeHdmi)
-	_ = acc.AddInputSource(2, "HDMI-2", characteristic.InputSourceTypeHdmi)
-	_ = acc.AddInputSource(3, "AndroidTV", characteristic.InputSourceTypeApplication)
-	_ = acc.AddInputSource(4, "AppleTV", characteristic.InputSourceTypeAirplay)
-	_ = acc.AddInputSource(5, "PlayStation", characteristic.InputSourceTypeOther)
-	_ = acc.AddInputSource(6, "XBox", characteristic.InputSourceTypeOther)
+	acc := homekit.NewAccessoryTelevision(config.GetInfo("pixoo64"))
+	_ = acc.AddInputSource(1, "Random Visualizer", characteristic.InputSourceTypeHdmi)
+	_ = acc.AddInputSource(2, "Favorite Cloud Channel", characteristic.InputSourceTypeHdmi)
+	_ = acc.AddInputSource(3, "Recommended Cloud Channel", characteristic.InputSourceTypeHdmi)
+	_ = acc.AddInputSource(4, "Subscribed Artist Cloud Channel", characteristic.InputSourceTypeHdmi)
+	_ = acc.AddInputSource(5, "Album Cloud Channel", characteristic.InputSourceTypeOther)
 	log.SetPrefix(fmt.Sprintf("[%T] <%v> ", acc, acc.GetSN()))
 	storage := hap.NewFsStore(fmt.Sprintf("./%s", acc.GetSN()))
 	server, err := hap.NewServer(storage, acc.GetAccessory())
@@ -83,6 +84,25 @@ func main() {
 	})
 
 	acc.Television.ActiveIdentifier.OnValueRemoteUpdate(func(v int) {
+    switch {
+    case v == 1:
+      rand.Seed(time.Now().UnixNano())
+      max := 10
+      device.Channel().ActivateVisualizer(rand.Intn(max -1 + 1) + 1)
+    case v == 2:
+      device.Channel().ActivateCloudIndex(1)
+    case v == 3:
+      device.Channel().ActivateCloudIndex(0)
+    case v == 4:
+      device.Display().Reset()
+      device.Display().ResetText()
+      device.Channel().ActivateCloudIndex(2)
+    case v == 5:
+      device.Display().Reset()
+      device.Display().ResetText()
+      device.Channel().ActivateCloudIndex(3)
+    } 
+
 		log.Printf("remote update active identifier: %[1]T - %[1]v\n", v)
   })
 	acc.Television.ConfiguredName.OnValueRemoteUpdate(func(v string) {
