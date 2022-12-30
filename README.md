@@ -6,6 +6,7 @@ This module is built upon the shoulders of [Brutella's HAP](https://github.com/b
 
 Currently Working:
 - [x] Turn Display off/on.
+- [x] Change television inputs to different channels on the Pixoo64. (switching from inputs in the upper ranges causes the channel to not change.)
 
 Todo:
 - [ ] Set custom Divoom channels via CLI flag or OS environment variables.
